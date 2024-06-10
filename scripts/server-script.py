@@ -8,8 +8,8 @@ import sys; sys.path.insert(0, '../scripts/')
 import get_bounding_boxes_from_html as bb
 
 # Directory to save downloaded files and results
-DOWNLOAD_DIR = 'data-html'
-RESULTS_DIR = 'bounding-box-results'
+DOWNLOAD_DIR = '../data/data-html'
+RESULTS_DIR = '../data/bounding-box-results'
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
