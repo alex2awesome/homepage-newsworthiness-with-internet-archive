@@ -33,7 +33,9 @@ async def process_collection(collection_id, page):
     html_file_count = 0
     for result in tqdm(collection_results, desc=f'Processing {collection_id}'):
         try:
-            item = get_item(identifier=result['identifier'], request_kwargs={"timeout":30})
+            subcollection_id = result['identifier']
+            print(f'fetching from: {subcollection_id}')
+            item = get_item(identifier=subcollection_id, request_kwargs={"timeout":30})
             item_files = list(item.get_files())
             html_files = list(filter(lambda x: x.name.endswith('html'), item_files))
             
