@@ -37,7 +37,7 @@ async def process_collection(collection_id, page):
             item_files = list(item.get_files())
             html_files = list(filter(lambda x: x.name.endswith('html'), item_files))
             
-            for html_file in html_files: 
+            for html_file in tqdm(html_files): 
                 # Download HTML file
                 try:
                     download_path = os.path.join(DOWNLOAD_DIR, html_file.name)
