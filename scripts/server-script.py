@@ -47,7 +47,7 @@ async def process_collection(collection_id, page, start_idx=None, end_idx=None):
         try:
             subcollection_id = result['identifier']
             logging.info(f'Fetching from: {subcollection_id}')
-            item = get_item(identifier=subcollection_id, request_kwargs={"timeout": 30})
+            item = get_item(identifier=subcollection_id, request_kwargs={"timeout": 300})
             item_files = list(item.get_files())
             
             html_files = list(filter(lambda x: x.name.endswith('html'), item_files))
