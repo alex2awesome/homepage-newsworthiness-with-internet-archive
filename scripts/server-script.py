@@ -52,6 +52,8 @@ async def process_collection(collection_id, page, start_idx=None, end_idx=None):
             
             html_files = list(filter(lambda x: x.name.endswith('html'), item_files))
             jpg_files = list(filter(lambda x: x.name.endswith('fullpage.jpg'), item_files))
+            random.shuffle(html_files)
+            random.shuffle(jpg_files)
 
             for html_file in tqdm(html_files):
                 # Download HTML file if it doesn't exist
