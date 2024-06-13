@@ -16,8 +16,32 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Directory to save downloaded files and results
 DOWNLOAD_DIR = '../data/data-html'
 RESULTS_DIR = '../data/bounding-box-results'
+LOG_FILE = 'downloaded_files.txt'
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 os.makedirs(RESULTS_DIR, exist_ok=True)
+
+# Load the list of downloaded files
+if os.path.exists(LOG_FILE):
+    with open(LOG_FILE, 'r') as f:
+        downloaded_files = set(f.read().splitlines())
+else:
+    downloaded_files = set()
+
+
+# Function to check if a file is already downloaded
+def is_file_downloaded(filename):
+    return filename in downloaded_files
+
+# Function to log the downloaded file
+def log_downloaded_file(filename):
+    downloaded_files.add(filename)
+    with open(LOG_FILE, 'a') as f:
+        f.write(filename + '\n')
+
+for root, dirs, files in os.walk("../data"):
+    for file in files:
+        if not is_file_downloaded(file):
+            log_downloaded_file(file)
 
 # Function to handle retries for downloading files
 def download_with_retry(file, download_dir, retries=3, delay=5):
@@ -63,9 +87,10 @@ async def process_collection(collection_id, page, start_idx=None, end_idx=None):
             for html_file in tqdm(html_files):
                 # Download HTML file if it doesn't exist
                 download_path = os.path.join(SPECIFIC_DOWNLOAD_HTML_DIR, html_file.name)
-                if not os.path.exists(download_path):
+                if not os.path.exists(download_path) and not is_file_downloaded(html_file.name):
                     if download_with_retry(html_file, download_path):
                         html_file_count += 1
+                        log_downloaded_file(html_file.name)
                         
                         # Apply bounding box algorithm
                         browser_fp = f'file://{os.getcwd()}/{download_path}'
@@ -79,13 +104,14 @@ async def process_collection(collection_id, page, start_idx=None, end_idx=None):
                         except Exception as e:
                             logging.error(f"Error processing homepage {html_file}: {e}")
             
-            if len(html_files) > 0:
-                for jpg_file in tqdm(jpg_files):
-                    # Download JPG file if it doesn't exist
-                    download_path = os.path.join(SPECIFIC_DOWNLOAD_JPG_DIR, jpg_file.name)
-                    if not os.path.exists(download_path):
-                        if not download_with_retry(jpg_file, download_path):
-                            logging.error(f"Failed to download {jpg_file.name} after multiple attempts.")
+            for jpg_file in tqdm(jpg_files):
+                # Download JPG file if it doesn't exist
+                download_path = os.path.join(SPECIFIC_DOWNLOAD_JPG_DIR, jpg_file.name)
+                if not os.path.exists(download_path) and not is_file_downloaded(jpg_file.name):
+                    if download_with_retry(jpg_file, download_path):
+                        log_downloaded_file(jpg_file.name)
+                    else:
+                        logging.error(f"Failed to download {jpg_file.name} after multiple attempts.")
 
         except Exception as e:
             logging.error(f"Error processing homepage group {result['identifier']}: {e}")
