@@ -54,10 +54,15 @@ async def process_collection(collection_id, page, start_idx=None, end_idx=None):
             jpg_files = list(filter(lambda x: x.name.endswith('fullpage.jpg'), item_files))
             random.shuffle(html_files)
             random.shuffle(jpg_files)
-
+            SPECIFIC_DOWNLOAD_HTML_DIR = os.path.join(DOWNLOAD_DIR, os.path.join(subcollection_id, "html"))
+            SPECIFIC_DOWNLOAD_JPG_DIR = os.path.join(DOWNLOAD_DIR, os.path.join(subcollection_id, "jpg"))
+            SPECIFIC_RESULTS_DIR = os.path.join(RESULTS_DIR, subcollection_id)
+            os.makedirs(SPECIFIC_DOWNLOAD_HTML_DIR, exist_ok=True)
+            os.makedirs(SPECIFIC_DOWNLOAD_JPG_DIR, exist_ok=True)
+            os.makedirs(SPECIFIC_RESULTS_DIR, exist_ok=True)
             for html_file in tqdm(html_files):
                 # Download HTML file if it doesn't exist
-                download_path = os.path.join(DOWNLOAD_DIR, html_file.name)
+                download_path = os.path.join(SPECIFIC_DOWNLOAD_HTML_DIR, html_file.name)
                 if not os.path.exists(download_path):
                     if download_with_retry(html_file, download_path):
                         html_file_count += 1
@@ -68,7 +73,7 @@ async def process_collection(collection_id, page, start_idx=None, end_idx=None):
                             bounding_box = await bb.get_bounding_box_one_file(page, file=browser_fp)
                             
                             # Save results
-                            result_path = os.path.join(RESULTS_DIR, f'{html_file.name}.csv')
+                            result_path = os.path.join(SPECIFIC_RESULTS_DIR, f'{html_file.name}.csv')
                             bounding_box_df = pd.DataFrame.from_dict(bounding_box["bounding_boxes"])
                             bounding_box_df.to_csv(result_path, index=False)
                         except Exception as e:
@@ -77,7 +82,7 @@ async def process_collection(collection_id, page, start_idx=None, end_idx=None):
             if len(html_files) > 0:
                 for jpg_file in tqdm(jpg_files):
                     # Download JPG file if it doesn't exist
-                    download_path = os.path.join(DOWNLOAD_DIR, jpg_file.name)
+                    download_path = os.path.join(SPECIFIC_DOWNLOAD_JPG_DIR, jpg_file.name)
                     if not os.path.exists(download_path):
                         if not download_with_retry(jpg_file, download_path):
                             logging.error(f"Failed to download {jpg_file.name} after multiple attempts.")
