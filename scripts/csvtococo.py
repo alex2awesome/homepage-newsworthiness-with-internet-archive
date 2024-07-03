@@ -1,3 +1,4 @@
+import argparse
 import csv
 import json
 import os
@@ -15,7 +16,6 @@ def csv_to_coco(csv_dir, image_dir, json_file):
 
     # Get all jpg files in the image directory
     jpg_files = glob(os.path.join(image_dir, '*.jpeg'))
-    #print(jpg_files)
     for jpg_file in jpg_files:
         try:
             image = cv2.imread(jpg_file)
@@ -37,7 +37,6 @@ def csv_to_coco(csv_dir, image_dir, json_file):
             with open(csv_file, newline='') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-
                     annotations.append({
                         "id": annotation_id,
                         "image_id": image_id,
@@ -53,8 +52,8 @@ def csv_to_coco(csv_dir, image_dir, json_file):
 
             images.append(image_entry)
             image_id += 1
-        except:
-            print("Error in translating " + jpg_file)
+        except Exception as e:
+            print(f"Error in translating {jpg_file}: {e}")
 
     categories_list = [{"id": id, "name": name} for name, id in categories.items()]
     coco_format = {
@@ -66,8 +65,12 @@ def csv_to_coco(csv_dir, image_dir, json_file):
     with open(json_file, 'w') as f:
         json.dump(coco_format, f)
 
-# Example usage
-csv_dir = '../small-csv-files/'  # Directory containing your CSV files
-image_dir = '../small-images/'  # Directory containing your JPG images
-json_file = 'annotations.json'  # Output JSON file
-csv_to_coco(csv_dir, image_dir, json_file)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Convert CSV annotations to COCO JSON format.')
+    parser.add_argument('--csv_dir', type=str, help='Directory containing your CSV files')
+    parser.add_argument('--image_dir', type=str, help='Directory containing your JPG images')
+    parser.add_argument('--json_file', type=str, help='Output JSON file')
+
+    args = parser.parse_args()
+
+    csv_to_coco(args.csv_dir, args.image_dir, args.json_file)
