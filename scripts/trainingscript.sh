@@ -24,7 +24,7 @@ if [ $? -eq 0 ]; then
         --annotations_json "annotations.json" \
         --image_dir "../../html-bb-jpg-samples" \
         --device "cuda"
-	    --num_gpus 2
+	--num_gpus 2
 else
     echo "csvtococo.py failed. Exiting."
     exit 1
