@@ -3,7 +3,7 @@ import os
 from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.data.datasets import register_coco_instances
 from detectron2.config import get_cfg
-from detectron2.engine import DefaultTrainer
+from detectron2.engine import DefaultTrainer, launch
 from detectron2 import model_zoo
 
 def setup_cfg(args):
@@ -14,9 +14,10 @@ def setup_cfg(args):
     cfg.DATALOADER.NUM_WORKERS = args.num_workers
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(args.config_file)
     cfg.MODEL.DEVICE = args.device
-    cfg.SOLVER.IMS_PER_BATCH = args.batch_size
+    cfg.SOLVER.IMS_PER_BATCH = args.batch_size * args.num_gpus  # Adjusted for multi-GPU
     cfg.SOLVER.BASE_LR = args.learning_rate
     cfg.SOLVER.MAX_ITER = args.max_iter
+    cfg.SOLVER.CHECKPOINT_PERIOD = args.checkpoint_period
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = args.batch_size_per_image
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = args.num_classes
     cfg.OUTPUT_DIR = args.output_dir
@@ -55,6 +56,10 @@ if __name__ == "__main__":
     parser.add_argument("--num_classes", type=int, default=1, help="Number of classes")
     parser.add_argument("--output_dir", default="./output", help="Output directory")
     parser.add_argument("--resume", action="store_true", help="Whether to resume training")
-
+    parser.add_argument("--checkpoint_period", type=int, default=100, help="Saves model at every checkpoint period")
+    parser.add_argument("--num_gpus", type=int, default=1, help="Number of GPUs to use")
     args = parser.parse_args()
-    main(args)
+
+    # Launch multi-GPU training
+    launch(main, args.num_gpus, num_machines=1, machine_rank=0, dist_url='auto', args=(args,))
+
