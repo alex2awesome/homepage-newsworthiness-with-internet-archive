@@ -12,8 +12,8 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 
 # Run csvtococo.py
 python3 "${SCRIPT_DIR}/multiprocesscsvtococo.py" \
-    --csv_dir "../data/bounding-box-results" \
-    --image_dir "../data/bounding-box-results" \
+    --csv_dir "../../data/bounding-box-results" \
+    --image_dir "../../data/bounding-box-results" \
     --json_file "annotations.json"
 
 # Check if csvtococo.py exited successfully
@@ -22,7 +22,7 @@ if [ $? -eq 0 ]; then
     python3 "${SCRIPT_DIR}/detectronscript.py" \
         --dataset_name "HomepageData" \
         --annotations_json "annotations.json" \
-        --image_dir "../data/bounding-box-results" \
+        --image_dir "../../data/bounding-box-results" \
         --device "cuda"
 	--num_gpus 4
 else
