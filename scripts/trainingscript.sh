@@ -7,20 +7,10 @@
 #SBATCH --cpus-per-gpu=10
 #SBATCH --partition=gpu
 
-# Load necessary modules (adjust as per your environment)
-module load cuda/12.1
 
 # Determine the directory of the current script
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 
-# Install Python packages from requirements.txt using pip
-pip install -r "${SCRIPT_DIR}/requirements.txt"
-
-# Install required packages using Conda
-conda install -y pytorch torchvision torchaudio cudatoolkit=12.1 -c pytorch -c nvidia
-
-# Install Detectron2 from GitHub
-python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 
 # Activate your Conda environment if needed (adjust as per your setup)
 # conda activate <your_environment_name>
