@@ -56,7 +56,7 @@ if __name__ == "__main__":
     parser.add_argument('--input_data_file', type=str, default=None)
     parser.add_argument('--start_idx', type=int, default=None)
     parser.add_argument('--end_idx', type=int, default=None)
-    parser.add_argument('--id_col', type=str, default='url')
+    parser.add_argument('--id_col', type=str, default='index')
     parser.add_argument('--prompt_col', type=str, default='prompt')
     parser.add_argument('--output_file', type=str, default=None)
 
@@ -91,6 +91,6 @@ if __name__ == "__main__":
             df = article_df.iloc[start_idx:end_idx]
             clean_prompts = df[args.prompt_col].tolist()
             cleaned_article_outputs = model.generate(clean_prompts, sampling_params)
-            write_to_file(output_fname, df[args.id_col] + '__' + df['Name'], cleaned_article_outputs)
+            write_to_file(output_fname, df[args.id_col], cleaned_article_outputs)
         else:
             logging.info(f"Skipping batch {start_idx} to {end_idx} as it already exists")

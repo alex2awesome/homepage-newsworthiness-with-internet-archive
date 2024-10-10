@@ -13,7 +13,7 @@ conda activate alex
 
 python run_prompts.py \
   --input_data_file prompts_to_clean.csv.gz \
-  --id_col url \
+  --id_col index \
   --prompt_col prompt \
   --output_file  cleaned_prompts.jsonl \
 
