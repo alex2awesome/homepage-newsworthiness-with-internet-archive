@@ -19,13 +19,8 @@ logging.basicConfig(
 from vllm import LLM,  SamplingParams
 from transformers import AutoTokenizer
 
-
-here = os.path.dirname(os.path.abspath(__file__))
-config_data = json.load(open(f'{here}/../config.json'))
-os.environ['HF_TOKEN'] = config_data["HF_TOKEN"]
 os.environ['VLLM_WORKER_MULTIPROC_METHOD'] = 'spawn'
 os.environ['VLLM_ALLOW_LONG_MAX_MODEL_LEN'] = '1'
-
 BATCH_SIZE = 500
 
 def load_model(model_name: str):
@@ -92,7 +87,7 @@ if __name__ == "__main__":
             logging.info(f"Running prompts for batch {start_idx} to {end_idx}")
             with open(output_fname, 'w') as f:
                 f.write('')
-                
+
             df = article_df.iloc[start_idx:end_idx]
             clean_prompts = df[args.prompt_col].tolist()
             cleaned_article_outputs = model.generate(clean_prompts, sampling_params)
