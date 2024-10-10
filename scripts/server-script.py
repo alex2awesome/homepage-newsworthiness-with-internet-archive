@@ -16,9 +16,35 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Directory to save downloaded files and results
 DOWNLOAD_DIR = '../data/data-html'
 RESULTS_DIR = '../data/bounding-box-results'
+LOG_FILE = 'downloaded_files.txt'
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
+<<<<<<< HEAD
+=======
+# Load the list of downloaded files
+if os.path.exists(LOG_FILE):
+    with open(LOG_FILE, 'r') as f:
+        downloaded_files = set(f.read().splitlines())
+else:
+    downloaded_files = set()
+
+
+# Function to check if a file is already downloaded
+def is_file_downloaded(filename):
+    return filename in downloaded_files
+
+# Function to log the downloaded file
+def log_downloaded_file(filename):
+    downloaded_files.add(filename)
+    with open(LOG_FILE, 'a') as f:
+        f.write(filename + '\n')
+
+for root, dirs, files in os.walk("../data"):
+    for file in files:
+        if not is_file_downloaded(file):
+            log_downloaded_file(file)
+>>>>>>> d2d39bd8e1bbe348ffaf9691f02ba34570493e68
 
 # Function to handle retries for downloading files
 def download_with_retry(file, download_dir, retries=3, delay=5):
@@ -114,6 +140,7 @@ async def process_collection(
             logging.info(f'Fetching from: {subcollection_id}')
             item = get_item(identifier=subcollection_id, request_kwargs={"timeout": 300})
             item_files = list(item.get_files())
+<<<<<<< HEAD
 
             if download_html:
                 await download_html_files(item_files, subcollection_id, page)
@@ -123,6 +150,47 @@ async def process_collection(
 
             if download_json:
                 await download_json_files(item_files, subcollection_id)
+=======
+            
+            html_files = list(filter(lambda x: x.name.endswith('html'), item_files))
+            jpg_files = list(filter(lambda x: x.name.endswith('fullpage.jpg'), item_files))
+            random.shuffle(html_files)
+            random.shuffle(jpg_files)
+            SPECIFIC_DOWNLOAD_HTML_DIR = os.path.join(DOWNLOAD_DIR, os.path.join(subcollection_id, "html"))
+            SPECIFIC_DOWNLOAD_JPG_DIR = os.path.join(DOWNLOAD_DIR, os.path.join(subcollection_id, "jpg"))
+            SPECIFIC_RESULTS_DIR = os.path.join(RESULTS_DIR, subcollection_id)
+            os.makedirs(SPECIFIC_DOWNLOAD_HTML_DIR, exist_ok=True)
+            os.makedirs(SPECIFIC_DOWNLOAD_JPG_DIR, exist_ok=True)
+            os.makedirs(SPECIFIC_RESULTS_DIR, exist_ok=True)
+            for html_file in tqdm(html_files):
+                # Download HTML file if it doesn't exist
+                download_path = os.path.join(SPECIFIC_DOWNLOAD_HTML_DIR, html_file.name)
+                if not os.path.exists(download_path) and not is_file_downloaded(html_file.name):
+                    if download_with_retry(html_file, download_path):
+                        html_file_count += 1
+                        log_downloaded_file(html_file.name)
+                        
+                        # Apply bounding box algorithm
+                        browser_fp = f'file://{os.getcwd()}/{download_path}'
+                        try:
+                            bounding_box = await bb.get_bounding_box_one_file(page, file=browser_fp)
+                            
+                            # Save results
+                            result_path = os.path.join(SPECIFIC_RESULTS_DIR, f'{html_file.name}.csv')
+                            bounding_box_df = pd.DataFrame.from_dict(bounding_box["bounding_boxes"])
+                            bounding_box_df.to_csv(result_path, index=False)
+                        except Exception as e:
+                            logging.error(f"Error processing homepage {html_file}: {e}")
+            
+            for jpg_file in tqdm(jpg_files):
+                # Download JPG file if it doesn't exist
+                download_path = os.path.join(SPECIFIC_DOWNLOAD_JPG_DIR, jpg_file.name)
+                if not os.path.exists(download_path) and not is_file_downloaded(jpg_file.name):
+                    if download_with_retry(jpg_file, download_path):
+                        log_downloaded_file(jpg_file.name)
+                    else:
+                        logging.error(f"Failed to download {jpg_file.name} after multiple attempts.")
+>>>>>>> d2d39bd8e1bbe348ffaf9691f02ba34570493e68
 
         except Exception as e:
             logging.error(f"Error processing homepage group {result['identifier']}: {e}")
