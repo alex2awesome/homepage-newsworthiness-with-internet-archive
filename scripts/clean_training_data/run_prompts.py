@@ -69,7 +69,7 @@ if __name__ == "__main__":
         args.end_idx = len(article_df)
     
     # load the model
-    sampling_params = SamplingParams(temperature=0.1, max_tokens=4096)
+    sampling_params = SamplingParams(temperature=0.1, max_tokens=200)
     tokenizer, model = load_model(args.model)
     num_batches = (args.end_idx - args.start_idx) // BATCH_SIZE
     batch_indices = [(i * BATCH_SIZE, min((i + 1) * BATCH_SIZE, args.end_idx)) for i in range(num_batches)]
