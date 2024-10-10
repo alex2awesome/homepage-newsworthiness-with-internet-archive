@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
         out_dirname, out_fname = os.path.split(args.output_file)
         fname, fext = os.path.splitext(out_fname)
-        output_fname = f'{out_dirname}/{fname}__{start_idx}_{end_idx}{fext}'
+        output_fname = f'{out_dirname}/{fname}__{start_idx}_{end_idx}{fext}' if out_dirname else f'{fname}__{start_idx}_{end_idx}{fext}'
         if not os.path.exists(output_fname):
             logging.info(f"Running prompts for batch {start_idx} to {end_idx}")
             with open(output_fname, 'w') as f:
