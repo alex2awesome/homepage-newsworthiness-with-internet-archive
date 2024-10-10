@@ -12,6 +12,7 @@
 *.sqlite3
 *.odb
 *.json
+*.jsonl
 *.xml
 *.yml
 *.yaml
@@ -19,6 +20,9 @@
 *.dat
 *.log
 *.tmp
+*.jpg
+*.html
+*.png
 *.temp
 *.cache
 *.dta
@@ -118,6 +122,7 @@ docs/_build/
 # PyBuilder
 .pybuilder/
 target/
+.idea/
 
 # Jupyter Notebook
 .ipynb_checkpoints

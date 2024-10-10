@@ -19,6 +19,7 @@ RESULTS_DIR = '../data/bounding-box-results'
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
+
 # Function to handle retries for downloading files
 def download_with_retry(file, download_dir, retries=3, delay=5):
     for i in range(retries):
@@ -30,8 +31,72 @@ def download_with_retry(file, download_dir, retries=3, delay=5):
             time.sleep(delay)
     return False
 
+async def download_html_files(item_files, subcollection_id, page):
+    html_files = list(filter(lambda x: x.name.endswith('html'), item_files))
+    random.shuffle(html_files)
+    SPECIFIC_DOWNLOAD_HTML_DIR = os.path.join(DOWNLOAD_DIR, os.path.join(subcollection_id, "html"))
+    SPECIFIC_RESULTS_DIR = os.path.join(RESULTS_DIR, subcollection_id)
+    os.makedirs(SPECIFIC_RESULTS_DIR, exist_ok=True)
+
+    os.makedirs(SPECIFIC_DOWNLOAD_HTML_DIR, exist_ok=True)
+    html_file_count = 0
+    for html_file in tqdm(html_files):
+        # Download HTML file if it doesn't exist
+        download_path = os.path.join(SPECIFIC_DOWNLOAD_HTML_DIR, html_file.name)
+        if not os.path.exists(download_path):
+            if download_with_retry(html_file, download_path):
+                html_file_count += 1
+
+                # Apply bounding box algorithm
+                browser_fp = f'file://{os.getcwd()}/{download_path}'
+                try:
+                    bounding_box = await bb.get_bounding_box_one_file(page, file=browser_fp)
+
+                    # Save results
+                    result_path = os.path.join(SPECIFIC_RESULTS_DIR, f'{html_file.name}.csv')
+                    bounding_box_df = pd.DataFrame.from_dict(bounding_box["bounding_boxes"])
+                    bounding_box_df.to_csv(result_path, index=False)
+                except Exception as e:
+                    logging.error(f"Error processing homepage {html_file}: {e}")
+
+
+async def download_jpg_files(item_files, subcollection_id):
+    jpg_files = list(filter(lambda x: x.name.endswith('fullpage.jpg'), item_files))
+    random.shuffle(jpg_files)
+    SPECIFIC_DOWNLOAD_JPG_DIR = os.path.join(DOWNLOAD_DIR, os.path.join(subcollection_id, "jpg"))
+    os.makedirs(SPECIFIC_DOWNLOAD_JPG_DIR, exist_ok=True)
+    for jpg_file in tqdm(jpg_files):
+        # Download JPG file if it doesn't exist
+        download_path = os.path.join(SPECIFIC_DOWNLOAD_JPG_DIR, jpg_file.name)
+        if not os.path.exists(download_path):
+            if not download_with_retry(jpg_file, download_path):
+                logging.error(f"Failed to download {jpg_file.name} after multiple attempts.")
+
+
+async def download_json_files(item_files, subcollection_id):
+    json_files = list(filter(lambda x: x.name.endswith('hyperlinks.json'), item_files))
+    random.shuffle(json_files)
+    SPECIFIC_DOWNLOAD_JSON_DIR = os.path.join(DOWNLOAD_DIR, os.path.join(subcollection_id, "hyperlink_json"))
+    os.makedirs(SPECIFIC_DOWNLOAD_JSON_DIR, exist_ok=True)
+    for jpg_file in tqdm(json_files):
+        # Download JPG file if it doesn't exist
+        download_path = os.path.join(SPECIFIC_DOWNLOAD_JSON_DIR, jpg_file.name)
+        if not os.path.exists(download_path):
+            if not download_with_retry(jpg_file, download_path):
+                logging.error(f"Failed to download {jpg_file.name} after multiple attempts.")
+
+
+
 # Function to process a single collection
-async def process_collection(collection_id, page, start_idx=None, end_idx=None):
+async def process_collection(
+    collection_id, 
+    page,
+    start_idx=None,
+    end_idx=None,
+    download_html=True,
+    download_jpg=True,
+    download_json=True
+):
     search = search_items(f'collection:{collection_id}')
     collection_results = list(search)
 
@@ -49,43 +114,15 @@ async def process_collection(collection_id, page, start_idx=None, end_idx=None):
             logging.info(f'Fetching from: {subcollection_id}')
             item = get_item(identifier=subcollection_id, request_kwargs={"timeout": 300})
             item_files = list(item.get_files())
-            
-            html_files = list(filter(lambda x: x.name.endswith('html'), item_files))
-            jpg_files = list(filter(lambda x: x.name.endswith('fullpage.jpg'), item_files))
-            random.shuffle(html_files)
-            random.shuffle(jpg_files)
-            SPECIFIC_DOWNLOAD_HTML_DIR = os.path.join(DOWNLOAD_DIR, os.path.join(subcollection_id, "html"))
-            SPECIFIC_DOWNLOAD_JPG_DIR = os.path.join(DOWNLOAD_DIR, os.path.join(subcollection_id, "jpg"))
-            SPECIFIC_RESULTS_DIR = os.path.join(RESULTS_DIR, subcollection_id)
-            os.makedirs(SPECIFIC_DOWNLOAD_HTML_DIR, exist_ok=True)
-            os.makedirs(SPECIFIC_DOWNLOAD_JPG_DIR, exist_ok=True)
-            os.makedirs(SPECIFIC_RESULTS_DIR, exist_ok=True)
-            for html_file in tqdm(html_files):
-                # Download HTML file if it doesn't exist
-                download_path = os.path.join(SPECIFIC_DOWNLOAD_HTML_DIR, html_file.name)
-                if not os.path.exists(download_path):
-                    if download_with_retry(html_file, download_path):
-                        html_file_count += 1
-                        
-                        # Apply bounding box algorithm
-                        browser_fp = f'file://{os.getcwd()}/{download_path}'
-                        try:
-                            bounding_box = await bb.get_bounding_box_one_file(page, file=browser_fp)
-                            
-                            # Save results
-                            result_path = os.path.join(SPECIFIC_RESULTS_DIR, f'{html_file.name}.csv')
-                            bounding_box_df = pd.DataFrame.from_dict(bounding_box["bounding_boxes"])
-                            bounding_box_df.to_csv(result_path, index=False)
-                        except Exception as e:
-                            logging.error(f"Error processing homepage {html_file}: {e}")
-            
-            if len(html_files) > 0:
-                for jpg_file in tqdm(jpg_files):
-                    # Download JPG file if it doesn't exist
-                    download_path = os.path.join(SPECIFIC_DOWNLOAD_JPG_DIR, jpg_file.name)
-                    if not os.path.exists(download_path):
-                        if not download_with_retry(jpg_file, download_path):
-                            logging.error(f"Failed to download {jpg_file.name} after multiple attempts.")
+
+            if download_html:
+                await download_html_files(item_files, subcollection_id, page)
+
+            if download_jpg:
+                await download_jpg_files(item_files, subcollection_id)
+
+            if download_json:
+                await download_json_files(item_files, subcollection_id)
 
         except Exception as e:
             logging.error(f"Error processing homepage group {result['identifier']}: {e}")
@@ -121,6 +158,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process news homepage collections and download the homepage files.')
     parser.add_argument('--start_idx', type=int, default=None, help='Start index for processing collections')
     parser.add_argument('--end_idx', type=int, default=None, help='End index for processing collections')
+    parser.add_argument('--download_html', action='store_true')
+    parser.add_argument('--download_jpg', action='store_true')
+    parser.add_argument('--download_json', action='store_true')
     args = parser.parse_args()
 
     # Run the async main function
